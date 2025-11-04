@@ -4,16 +4,17 @@ from typing import Dict, Optional, List
 from openai import OpenAI
 from anthropic import Anthropic
 import google.generativeai as genai
-from constants import OPENAI_API_KEY, CLAUDE_API_KEY, GEMINI_API_KEY
+import ollama
+from constants import OPENAI_API_KEY, CLAUDE_API_KEY, GEMINI_API_KEY, OLLAMA_BASE_URL
 
 class LLM:
     def __init__(self, model: str = "o3-mini", provider: Optional[str] = None):
         """
-        Initialize LLM with OpenAI, Claude, or Gemini client.
+        Initialize LLM with OpenAI, Claude, Gemini, or Ollama client.
         
         Args:
             model: Model name to use
-            provider: Either 'openai', 'claude', or 'gemini'. If None, auto-detects based on available API keys.
+            provider: Either 'openai', 'claude', 'gemini', or 'ollama'. If None, auto-detects based on available API keys.
         """
         self.model = model
         self.provider = None  # Will be set lazily
@@ -23,11 +24,12 @@ class LLM:
         self.client = None
         self.claude_client = None
         self.gemini_client = None
+        self.ollama_client = None
         self.should_reason = False
         
     def _initialize_client(self):
         """Lazy initialization of clients. Only called when actually needed."""
-        if self.client is not None or self.claude_client is not None or self.gemini_client is not None:
+        if self.client is not None or self.claude_client is not None or self.gemini_client is not None or self.ollama_client is not None:
             return  # Already initialized
         
         # Determine which provider to use
@@ -42,7 +44,8 @@ class LLM:
             elif GEMINI_API_KEY:
                 provider = "gemini"
             else:
-                raise ValueError("No API keys found. Please set OPENAI_API_KEY, CLAUDE_API_KEY, or GEMINI_API_KEY environment variable.")
+                # Default to Ollama if no API keys are set
+                provider = "ollama"
         
         # Initialize the selected provider, with fallback if key not available
         if provider == "openai":
@@ -51,12 +54,14 @@ class LLM:
                 self.should_reason = self.model in ["o3-mini", "o1-preview"]
                 self.claude_client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.provider = "openai"
             elif CLAUDE_API_KEY:
                 # Fallback to Claude if OpenAI key not available
                 self.claude_client = Anthropic(api_key=CLAUDE_API_KEY)
                 self.client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "claude"
             elif GEMINI_API_KEY:
@@ -65,16 +70,24 @@ class LLM:
                 self.gemini_client = genai.GenerativeModel(self.model)
                 self.client = None
                 self.claude_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "gemini"
             else:
-                raise ValueError("OPENAI_API_KEY not found. Please set the OPENAI_API_KEY environment variable.")
+                # Fallback to Ollama if no keys available
+                self.ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+                self.client = None
+                self.claude_client = None
+                self.gemini_client = None
+                self.should_reason = False
+                self.provider = "ollama"
                 
         elif provider == "claude":
             if CLAUDE_API_KEY:
                 self.claude_client = Anthropic(api_key=CLAUDE_API_KEY)
                 self.client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "claude"
             elif OPENAI_API_KEY:
@@ -83,6 +96,7 @@ class LLM:
                 self.should_reason = self.model in ["o3-mini", "o1-preview"]
                 self.claude_client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.provider = "openai"
             elif GEMINI_API_KEY:
                 # Fallback to Gemini if Claude and OpenAI keys not available
@@ -90,10 +104,17 @@ class LLM:
                 self.gemini_client = genai.GenerativeModel(self.model)
                 self.client = None
                 self.claude_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "gemini"
             else:
-                raise ValueError("CLAUDE_API_KEY not found. Please set the CLAUDE_API_KEY environment variable.")
+                # Fallback to Ollama if no keys available
+                self.ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+                self.client = None
+                self.claude_client = None
+                self.gemini_client = None
+                self.should_reason = False
+                self.provider = "ollama"
         
         elif provider == "gemini":
             if GEMINI_API_KEY:
@@ -101,6 +122,7 @@ class LLM:
                 self.gemini_client = genai.GenerativeModel(self.model)
                 self.client = None
                 self.claude_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "gemini"
             elif OPENAI_API_KEY:
@@ -109,18 +131,36 @@ class LLM:
                 self.should_reason = self.model in ["o3-mini", "o1-preview"]
                 self.claude_client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.provider = "openai"
             elif CLAUDE_API_KEY:
                 # Fallback to Claude if Gemini and OpenAI keys not available
                 self.claude_client = Anthropic(api_key=CLAUDE_API_KEY)
                 self.client = None
                 self.gemini_client = None
+                self.ollama_client = None
                 self.should_reason = False
                 self.provider = "claude"
             else:
-                raise ValueError("GEMINI_API_KEY not found. Please set the GEMINI_API_KEY environment variable.")
+                # Fallback to Ollama if no keys available
+                self.ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+                self.client = None
+                self.claude_client = None
+                self.gemini_client = None
+                self.should_reason = False
+                self.provider = "ollama"
+        
+        elif provider == "ollama":
+            # Ollama doesn't require an API key, just a base URL
+            self.ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+            self.client = None
+            self.claude_client = None
+            self.gemini_client = None
+            self.should_reason = False
+            self.provider = "ollama"
+        
         else:
-            raise ValueError(f"Unknown provider: {provider}. Must be 'openai', 'claude', or 'gemini'")
+            raise ValueError(f"Unknown provider: {provider}. Must be 'openai', 'claude', 'gemini', or 'ollama'")
 
     def _convert_messages_for_claude(self, messages: List[Dict]) -> List[Dict]:
         """Convert OpenAI format messages to Claude format."""
@@ -190,7 +230,7 @@ class LLM:
             response = self.claude_client.messages.create(**params)
             return response.content[0].text
         
-        else:  # Gemini
+        elif self.provider == "gemini":  # Gemini
             gemini_messages, system_instruction = self._convert_messages_for_gemini(messages)
 
             print(f"================= Gemini messages: {gemini_messages}")
@@ -226,6 +266,18 @@ class LLM:
                 )
             )
             return response.text
+        
+        else:  # Ollama
+            response = self.ollama_client.chat(
+                model=self.model,
+                messages=messages,
+                options={
+                    "temperature": temperature,
+                    "num_predict": 4096,
+                },
+                think=True
+            )
+            return response['message']['content']
 
     def prompt(self, prompt: str, reasoning: str = "medium", temperature: float = 0.2):
         """Send a prompt using the selected provider."""
@@ -256,7 +308,7 @@ class LLM:
             )
             return response.content[0].text
         
-        else:  # Gemini
+        elif self.provider == "gemini":
             response = self.gemini_client.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
@@ -265,5 +317,17 @@ class LLM:
                 )
             )
             return response.text
+        
+        else:  # Ollama
+            response = self.ollama_client.chat(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                options={
+                    "temperature": temperature,
+                    "num_predict": 4096,
+                },
+                think=True
+            )
+            return response['message']['content']
 
     
