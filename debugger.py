@@ -364,7 +364,7 @@ class Debugger:
                     raise RuntimeError('Delve (dlv) not found in PATH. Install github.com/go-delve/delve/cmd/dlv')
                 port = self._find_free_port()
                 # headless so we can capture logs, use a short-lived listen on random port
-                debugger_cmd = [dlv, 'exec', run_binary_path, '--headless', f'--listen=127.0.0.1:{port}', '--api-version=2', '--accept-multiclient', '--log']
+                debugger_cmd = [dlv, 'exec', run_binary_path, f'--listen=127.0.0.1:{port}', '--api-version=2', '--accept-multiclient', '--allow-non-terminal-interactive=true', '--log']
                 debugger_name = 'dlv'
             else:
                 # For rust prefer rust-gdb or rust-lldb
@@ -428,7 +428,8 @@ class Debugger:
                     script_contents = ''
             else:
                 script_contents = ''
-
+            
+            print(f"Debugger command: {debugger_cmd}")
             # Launch debugger process
             dbg_proc = subprocess.Popen(
                 debugger_cmd,
@@ -438,6 +439,14 @@ class Debugger:
                 text=True
             )
 
+            commands = """
+            break main.main
+            call
+            next
+            exit
+            """
+
+            stdout, stderr = dbg_proc.communicate(commands)
             stdout, stderr = dbg_proc.communicate(timeout=timeout_seconds)
 
             # collect qemu stderr if present
