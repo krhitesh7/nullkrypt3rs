@@ -1,0 +1,2 @@
+2025/11/04 11:02:31 Starting vulnerable server on :8080
+2025/11/04 11:02:31 listen tcp :8080: bind: address already in use

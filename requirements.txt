@@ -1,5 +1,6 @@
 colorama==0.4.6
 libclang==18.1.1
 openai==1.65.2
-anthropic==0.39.0
+anthropic>=0.40.0
 tiktoken==0.9.0
+google-generativeai>=0.8.0

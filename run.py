@@ -128,7 +128,7 @@ def main():
         "--llm-model", "-l",
         help="LLM model to use for analysis",
         default="o3-mini",
-        choices=["gpt-3.5-turbo", "gpt-4o", "gpt-4o-mini", "o3-mini", "o1-preview", 
+        choices=["gemini-2.5-pro","gpt-3.5-turbo", "gpt-4o", "gpt-4o-mini", "o3-mini", "o1-preview", 
                  "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
     )
     
@@ -136,7 +136,7 @@ def main():
         "--provider", "-p",
         help="LLM provider to use",
         default="openai",
-        choices=["openai", "claude"]
+        choices=["openai", "claude", "gemini"]
     )
     
     parser.add_argument(

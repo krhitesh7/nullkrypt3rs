@@ -575,7 +575,7 @@ class Debugger:
 
         return stdout, stderr_with_json
 
-
+'''
 if __name__ == "__main__":
     dbg = Debugger()
     # Example: debug the Go file (replace with your path)
@@ -587,3 +587,4 @@ if __name__ == "__main__":
         print(err)
     except Exception as e:
         print(json.dumps({'error': str(e)}))
+'''

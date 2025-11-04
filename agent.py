@@ -109,8 +109,10 @@ class Agent:
             base = os.path.splitext(os.path.basename(self.file))[0]
             
             output = os.path.join(directory, base) if directory else base
-                
-            os.system(f"g++ -std=c++17 -g {self.file} -o {output} -fno-stack-protector -z execstack -no-pie -w")
+            # logger.info(f"g++ -std=c++17 -g {self.file} -o {output} -fno-stack-protector -z execstack -no-pie -w")
+            logger.info(f"go build -o {output} {self.file}")
+            # os.system(f"g++ -std=c++17 -g {self.file} -o {output} -fno-stack-protector -z execstack -no-pie -w")
+            os.system(f"go build -o {output} {self.file}")
             return output
         except Exception as e:
             logger.error(f"Error compiling binary: {e}")
