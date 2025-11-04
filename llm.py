@@ -153,6 +153,7 @@ class LLM:
         elif provider == "ollama":
             # Ollama doesn't require an API key, just a base URL
             self.ollama_client = ollama.Client(host=OLLAMA_BASE_URL)
+            self.should_reason = self.model in ["qwen3:235b"]
             self.client = None
             self.claude_client = None
             self.gemini_client = None
@@ -268,14 +269,15 @@ class LLM:
             return response.text
         
         else:  # Ollama
+            print(f"================= Ollama model: {self.model} {self.should_reason}")
             response = self.ollama_client.chat(
                 model=self.model,
                 messages=messages,
                 options={
                     "temperature": temperature,
-                    "num_predict": 4096,
+                    "num_predict": 16384,
                 },
-                think=True
+                think=self.should_reason
             )
             return response['message']['content']
 
@@ -319,14 +321,15 @@ class LLM:
             return response.text
         
         else:  # Ollama
+            print(f"================= Ollama model: {self.model} {self.should_reason}")
             response = self.ollama_client.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 options={
                     "temperature": temperature,
-                    "num_predict": 4096,
+                    "num_predict": 16384,
                 },
-                think=True
+                think=self.should_reason
             )
             return response['message']['content']
 
