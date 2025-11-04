@@ -30,7 +30,7 @@ def print_banner():
 class BabyNaptime:
     def __init__(self, code_file: str, max_iterations: int = 100, 
                  llm_model: str = "gpt-3.5-turbo", main_function: str = "main",
-                 keep_history: int = 10):
+                 keep_history: int = 10, provider: str = "openai"):
         """
         Initialize the BabyNaptime vulnerability analyzer.
         
@@ -39,6 +39,8 @@ class BabyNaptime:
             max_iterations: Maximum number of analysis iterations (default: 100)
             llm_model: LLM model to use for analysis (default: gpt-3.5-turbo)
             main_function: Entry function to begin analysis (default: main)
+            keep_history: Number of conversation history items to keep (default: 10)
+            provider: LLM provider, either 'openai' or 'claude' (default: 'openai')
         """
         self.code_file = code_file
         self.is_binary = False
@@ -46,7 +48,8 @@ class BabyNaptime:
         self.llm_model = llm_model
         self.keep_history = keep_history
         self.main_function = main_function
-        self.code_browser = CodeBrowser()
+        self.provider = provider
+        self.code_browser = CodeBrowser(llm_model=llm_model, provider=provider)
         
         if not os.path.exists(code_file):
             raise FileNotFoundError(f"Source file not found: {code_file}")
@@ -82,8 +85,15 @@ class BabyNaptime:
         else:
             function_body = "the path of binary file is"+self.code_file
         
-        self.agent = Agent(self.code_file, function_body, self.is_binary,llm_model=self.llm_model, keep_history=self.keep_history)
-        logger.info(f"{Fore.WHITE}Starting code analysis...{Style.RESET_ALL}")
+        self.agent = Agent(
+            self.code_file, 
+            function_body, 
+            self.is_binary,
+            llm_model=self.llm_model,
+            provider=self.provider,
+            keep_history=self.keep_history
+        )
+        logger.info(f"{Fore.WHITE}Starting code analysis with {self.provider} provider...{Style.RESET_ALL}")
         self.agent.run()
         
 
@@ -118,7 +128,15 @@ def main():
         "--llm-model", "-l",
         help="LLM model to use for analysis",
         default="o3-mini",
-        choices=["gpt-3.5-turbo", "gpt-4o", "gpt-4o-mini", "o3-mini", "o1-preview"]
+        choices=["gpt-3.5-turbo", "gpt-4o", "gpt-4o-mini", "o3-mini", "o1-preview", 
+                 "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
+    )
+    
+    parser.add_argument(
+        "--provider", "-p",
+        help="LLM provider to use",
+        default="openai",
+        choices=["openai", "claude"]
     )
     
     parser.add_argument(
@@ -161,7 +179,8 @@ def main():
             max_iterations=args.max_iterations,
             llm_model=args.llm_model,
             main_function=args.main_function,
-            keep_history=args.keep_history
+            keep_history=args.keep_history,
+            provider=args.provider
         )
     analyzer.run()
 

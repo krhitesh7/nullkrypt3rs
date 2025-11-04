@@ -8,8 +8,9 @@ from summarizer import Summarizer
 from logger import logger
 from colorama import Fore
 
-from prompts.system import SYSTEM_PROMPT
+from prompts.system import get_system_prompt
 from prompts.tooluse import TOOLUSE_PROMPT
+from utils import detect_language
 
 
 class Agent:
@@ -23,6 +24,8 @@ class Agent:
         llm: LLM instance for generating responses
         file: Path to source code file being analyzed
         llm_model: Name of LLM model being used
+        provider: LLM provider ('openai' or 'claude')
+        language: Detected programming language
         binary_path: Path to compiled binary
         keep_history: Number of conversation items to maintain in context
         initial_data: Initial code/data to analyze
@@ -30,20 +33,30 @@ class Agent:
         SYSTEM_PROMPT: System prompt template for the LLM
     """
 
-    def __init__(self, file: str, initial_data: str,is_binary: bool, llm_model: str = "o3-mini", keep_history: int = 10, ):
+    def __init__(self, file: str, initial_data: str, is_binary: bool, llm_model: str = "o3-mini", 
+                 provider: str = "openai", keep_history: int = 10):
         """
         Initialize the agent.
 
         Args:
             file: Path to source code file to analyze
             initial_data: Initial code/data to analyze
+            is_binary: Whether the file is a binary
             llm_model: Name of LLM model to use (default: o3-mini)
+            provider: LLM provider, either 'openai' or 'claude' (default: 'openai')
             keep_history: Number of conversation items to keep in context (default: 10)
         """
-        self.llm = LLM(llm_model)
+        # Detect programming language
+        self.language = detect_language(file, initial_data if not is_binary else None)
+        logger.info(f"{Fore.CYAN}Detected language: {self.language}")
+        
+        # Initialize LLM with provider
+        self.llm = LLM(model=llm_model, provider=provider)
         self.file = file
         self.llm_model = llm_model
+        self.provider = provider
         self.is_binary = is_binary
+        
         if self.is_binary:
             self.binary_path = self.file
         else:
@@ -56,7 +69,13 @@ class Agent:
             {"role": "user", "content": initial_data},
             {"role": "user", "content": f"Binary path: {self.binary_path}"}
         ]
-        self.SYSTEM_PROMPT = SYSTEM_PROMPT.format(file=self.file, binary_path=self.binary_path)
+        
+        # Get language-specific system prompt
+        self.SYSTEM_PROMPT = get_system_prompt(
+            language=self.language,
+            file=self.file,
+            binary_path=self.binary_path
+        )
         
     def tool_use(self, response: str) -> str:
         """
@@ -147,5 +166,5 @@ class Agent:
                 report.generate_summary_report(self.history)
                 raise SystemExit(0)
             
-            tool_response = Caller(file=self.file, llm_model=self.llm_model).call_tool(tool_command)
+            tool_response = Caller(file=self.file, llm_model=self.llm_model, provider=self.provider).call_tool(tool_command)
             self.history.append({"role": "user", "content": str(tool_response)})

@@ -23,16 +23,17 @@ class Caller:
         debugger (Debugger): Instance of debugging tool
     """
 
-    def __init__(self, file: str, llm_model: str = "o3-mini") -> None:
+    def __init__(self, file: str, llm_model: str = "o3-mini", provider: str = None) -> None:
         """
         Initialize the Caller with required tools.
 
         Args:
             file (str): Path to source file to analyze
             llm_model (str, optional): Name of LLM model to use. Defaults to "o3-mini"
+            provider (str, optional): LLM provider to use ('openai' or 'claude'). If None, auto-detects.
         """
         self.file = file
-        self.code_browser = CodeBrowser()
+        self.code_browser = CodeBrowser(llm_model=llm_model, provider=provider)
         self.script_runner = ScriptRunner(llm_model)
         self.debugger = Debugger()
         self.r2 = R2()

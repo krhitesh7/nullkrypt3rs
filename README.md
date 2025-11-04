@@ -1,9 +1,3 @@
-<p align="center">
-  <img src="demo/logo.png" width="500">
-</p>
-
-# 🍼 Baby Naptime
-
 > *Find vulnerabilities while you sleep!*
 
 A very simple and basic open source implementation inspired by [Google's Project Naptime](https://googleprojectzero.blogspot.com/2024/06/project-naptime.html) - a vulnerability analysis tool that uses Large Language Models (LLMs) to discover and exploit native vulnerabilities. This was a weekend project, so please expect some hacky stuff here and there.
