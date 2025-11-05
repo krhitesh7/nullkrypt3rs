@@ -120,11 +120,26 @@ class PRAnalyzer:
             logger.info(f"{Fore.GREEN}Changed files: {self.pr_data['changed_files']}")
             logger.info(f"{Fore.GREEN}Additions: {self.pr_data['additions']}, Deletions: {self.pr_data['deletions']}")
             
-            # Get diff
-            self.diff_data = pr.diff()
-            
             # Get file contents for all changed files
             files = pr.get_files()
+            
+            # Build diff from file patches
+            diff_parts = []
+            for file in files:
+                # Add file header
+                diff_parts.append(f"diff --git a/{file.filename} b/{file.filename}")
+                diff_parts.append(f"--- a/{file.filename}")
+                diff_parts.append(f"+++ b/{file.filename}")
+                
+                # Add patch if available (None for binary files or very large diffs)
+                if file.patch:
+                    diff_parts.append(file.patch)
+                else:
+                    # For binary files or files without patch, add a placeholder
+                    diff_parts.append(f"Binary file {file.filename} changed")
+                diff_parts.append("")  # Empty line between files
+            
+            self.diff_data = "\n".join(diff_parts)
             for file in files:
                 filename = file.filename
                 

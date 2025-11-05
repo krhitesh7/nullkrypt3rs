@@ -301,12 +301,7 @@ def health():
     Returns:
         JSON with server status and configuration
     """
-    config_status = {
-        "webhook_secret_configured": bool(WEBHOOK_SECRET),
-        "github_token_configured": bool(GITHUB_TOKEN),
-        "llm_model": LLM_MODEL,
-        "llm_provider": LLM_PROVIDER,
-    }
+    config_status = {}
     
     return jsonify({
         "status": "healthy",
@@ -316,6 +311,7 @@ def health():
 
 
 @app.route("/", methods=["GET"])
+@app.route("/home", methods=["GET"])
 def index():
     """
     Root endpoint with server information.
@@ -327,14 +323,10 @@ def index():
         "endpoints": {
             "/webhook": "POST - GitHub webhook endpoint",
             "/health": "GET - Health check",
-            "/": "GET - This page"
+            "/": "GET - This page",
+            "/home": "GET - This page"
         },
-        "configuration": {
-            "llm_model": LLM_MODEL,
-            "llm_provider": LLM_PROVIDER,
-            "webhook_configured": bool(WEBHOOK_SECRET),
-            "github_authenticated": bool(GITHUB_TOKEN)
-        }
+        "configuration": {}
     }), 200
 
 
