@@ -455,9 +455,9 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Analyze GitHub PR for security vulnerabilities")
-    parser.add_argument("pr_url", help="GitHub PR URL (e.g., https://github.com/owner/repo/pull/123)")
+    parser.add_argument("-u", "--pr_url", help="GitHub PR URL (e.g., https://github.com/owner/repo/pull/123)")
     parser.add_argument("-m", "--model", default="o3-mini", help="LLM model to use")
-    parser.add_argument("-p", "--provider", default="openai", choices=["openai", "claude"],
+    parser.add_argument("-p", "--provider", default="openai", choices=["openai", "claude", "gemini", "ollama"],
                        help="LLM provider")
     parser.add_argument("-o", "--output", default="pr_security_analysis.json",
                        help="Output file name")

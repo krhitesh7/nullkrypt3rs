@@ -1,1 +1,14 @@
 .venv/*
+venv/*
+venv
+
+# Environment variables
+.env
+httpapi/.env
+
+# Logs
+*.log
+logs/*
+
+# Results
+results/*.json
